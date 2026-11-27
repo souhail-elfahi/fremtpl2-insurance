@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="340" viewBox="0 0 900 340" role="img" aria-labelledby="t d">
+  <title id="t">Le devenir des 36 102 sinistres</title>
+  <desc id="d">Sur 36 102 sinistres déclarés, 9 658 sont sans montant et 26 444 avec montant. Parmi ces derniers, 263 sont au-dessus du p99 et 26 181 sous le seuil.</desc>
+  <rect x="0.75" y="0.75" width="898.5" height="338.5" rx="6" fill="#FBFAF5" stroke="#B9B29C" stroke-width="1.5"/>
+
+  <!-- hauteurs proportionnelles : 240 px pour 36 102 sinistres ; la branche de 263 est épaissie à 2 px pour rester visible -->
+  <path d="M216 60 C323 60 323 44 430 44 L430 108.2 C323 108.2 323 124.2 216 124.2 Z" fill="#B3261E" fill-opacity="0.28"/>
+  <path d="M216 124.2 C323 124.2 323 130 430 130 L430 305.8 C323 305.8 323 300 216 300 Z" fill="#1F4E9C" fill-opacity="0.28"/>
+  <path d="M446 130 C568 130 568 114 690 114 L690 116 C568 116 568 131.8 446 131.8 Z" fill="#F2C230"/>
+  <path d="M446 131.8 C568 131.8 568 140 690 140 L690 314 C568 314 568 305.8 446 305.8 Z" fill="#1F4E9C" fill-opacity="0.28"/>
+
+  <rect x="200" y="60" width="16" height="240" fill="#1C1C1C"/>
+  <rect x="430" y="44" width="16" height="64.2" fill="#B3261E"/>
+  <rect x="430" y="130" width="16" height="175.8" fill="#1F4E9C"/>
+  <rect x="690" y="114" width="16" height="2" fill="#F2C230"/>
+  <rect x="690" y="140" width="16" height="174" fill="#1F4E9C"/>
+
+  <g font-family="'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" fill="#1C1C1C">
+    <text x="186" y="176" text-anchor="end" font-size="22" font-weight="700">36 102</text>
+    <text x="186" y="198" text-anchor="end">sinistres déclarés</text>
+    <text x="460" y="81"><tspan font-weight="700" fill="#B3261E">9 658</tspan><tspan dx="6" fill="#B3261E">sans montant</tspan></text>
+    <text x="420" y="223" text-anchor="end"><tspan font-weight="700">26 444</tspan><tspan dx="6">avec montant</tspan></text>
+    <text x="716" y="120"><tspan font-weight="700">263</tspan><tspan dx="6">au-dessus du p99</tspan></text>
+    <text x="716" y="232"><tspan font-weight="700">26 181</tspan><tspan dx="6">sous le seuil</tspan></text>
+  </g>
+</svg>

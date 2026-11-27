@@ -104,6 +104,10 @@ resultats as (
     union all select 20, 'annees d exposition (plafonnee)', expo from a
     union all select 20 + rang, 'frequence ' || libelle, frequence from ages join tranches using (rang)
     union all select 30 + rang, 'exposition ' || libelle, expo from ages join tranches using (rang)
+    union all select 41, 'part de sinistres chiffres, minimum par segment (%)',
+        min(100.0 * n_sinistres_chiffres / n_sinistres) from {{ ref('mart_segments') }}
+    union all select 42, 'part de sinistres chiffres, maximum par segment (%)',
+        max(100.0 * n_sinistres_chiffres / n_sinistres) from {{ ref('mart_segments') }}
 )
 
 select ordre, indicateur, round(valeur, 4) as valeur

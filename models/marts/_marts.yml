@@ -24,3 +24,38 @@ models:
           SEUIL PROVISOIRE (V1), à revoir avant tout usage tarifaire.
       - name: has_amount
         description: Vrai si ClaimNb > 0 et au moins une ligne de montant.
+
+  - name: mart_segments
+    description: >
+      Indicateurs par variable de segmentation et par modalité. Analyse à une
+      variable : l'effet d'une variable n'est pas isolé de celui des autres.
+    columns:
+      - name: variable
+        description: Variable de segmentation (nom de la colonne source).
+      - name: modalite
+        description: Valeur ou tranche de la variable.
+        data_tests:
+          - not_null
+      - name: n_contrats
+        description: Nombre de contrats.
+      - name: exposition
+        description: Somme de exposure_capped, en années.
+      - name: n_sinistres
+        description: Somme de ClaimNb.
+      - name: frequence
+        description: n_sinistres / exposition.
+        data_tests:
+          - strictly_positive
+      - name: n_sinistres_chiffres
+        description: Nombre de lignes de montant.
+      - name: cout_moyen_observe
+        description: Montant brut observé / n_sinistres_chiffres.
+      - name: prime_pure
+        description: >
+          frequence x cout_moyen_observe. Suppose que les sinistres sans montant
+          coûtent en moyenne autant que les autres sinistres du segment
+          (hypothèse non démontrée).
+      - name: relativite_frequence
+        description: frequence du segment / fréquence du portefeuille.
+      - name: faible_exposition
+        description: Vrai si l'exposition est inférieure à 1 000 années.
