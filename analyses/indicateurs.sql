@@ -1,5 +1,5 @@
 -- Indicateurs de synthèse. Analyse dbt : compilée, mais aucune table ni vue n'est créée.
--- Lancer : .venv\Scripts\dbt.exe show --select indicateurs --limit 20
+-- Lancer : .venv\Scripts\dbt.exe show --select indicateurs --limit 20 --output json
 
 with mart as (
     select
@@ -42,6 +42,15 @@ orphelins as (
     )
 ),
 
+-- médiane par sinistre, orphelins exclus (même population que les coûts moyens)
+mediane as (
+    select median(c.ClaimAmount) as montant
+    from {{ ref('stg_claims') }} as c
+    where exists (
+        select 1 from mart as m where m.IDpol = c.IDpol
+    )
+),
+
 resultats as (
     select 1 as ordre, 'seuil p99' as indicateur, p99 as valeur from seuil
     union all select 2, 'population du p99 (lignes)', lignes from seuil
@@ -53,6 +62,12 @@ resultats as (
     union all select 8, 'ecart 7 vs 6 (%)', 100 * (prime_connu / prime_tous - 1) from primes
     union all select 9, 'lignes du mart', lignes_mart from a
     union all select 10, 'IDpol orphelins', idpol from orphelins
+    union all select 11, 'sinistres declares', claimnb from a
+    union all select 12, 'sinistres declares sans montant', claimnb - lignes_montant from a
+    union all select 13, 'frequence', claimnb / expo from a
+    union all select 14, 'cout median par sinistre', montant from mediane
+    union all select 15, 'prime pure, sans montant = 0', brut / expo from a
+    union all select 16, 'montant retire par ecretement (%)', 100 * (brut - ecrete) / brut from a
 )
 
 select ordre, indicateur, round(valeur, 4) as valeur
