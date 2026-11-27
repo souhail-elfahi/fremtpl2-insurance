@@ -11,6 +11,8 @@ models:
           - not_null
       - name: exposure
         description: Exposition brute, telle que dans la source.
+        data_tests:
+          - strictly_positive
       - name: exposure_capped
         description: Exposition plafonnée à 1.
       - name: exposure_flag
@@ -23,3 +25,13 @@ models:
         description: Identifiant du contrat. Pas unique, un contrat pouvant avoir plusieurs sinistres.
         data_tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_policies')
+                field: IDpol
+              config:
+                severity: warn  # orphelins connus : 6 IDpol attendus
+      - name: ClaimAmount
+        description: Montant du sinistre.
+        data_tests:
+          - strictly_positive

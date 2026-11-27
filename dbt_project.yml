@@ -11,3 +11,5 @@ models:
   fremtpl2:
     staging:
       +materialized: view  # le staging ne duplique pas les données
+    marts:
+      +materialized: table  # calculé une fois, puis lu rapidement

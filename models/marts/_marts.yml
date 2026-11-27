@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: mart_policy_claims
+    description: >
+      Une ligne par contrat, avec les montants de sinistres agrégés. Les sinistres
+      orphelins (IDpol absent des contrats) en sont absents.
+    columns:
+      - name: IDpol
+        description: Identifiant du contrat (clé primaire).
+        data_tests:
+          - unique
+          - not_null
+      - name: n_amount_lines
+        description: Nombre de lignes de montant du contrat (0 si aucune).
+      - name: total_amount
+        description: Somme brute des montants. NULL si aucun montant observé.
+      - name: total_amount_capped
+        description: >
+          Somme des montants, chacun écrêté au p99 de tous les montants.
+          SEUIL PROVISOIRE (V1), à revoir avant tout usage tarifaire.
+      - name: has_amount
+        description: Vrai si ClaimNb > 0 et au moins une ligne de montant.
