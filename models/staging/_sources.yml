@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: raw
+    description: Tables brutes chargées par ingest.py (OpenML 41214 et 41215).
+    schema: main
+    tables:
+      - name: raw_freq
+        description: Contrats, une ligne par IDpol.
+      - name: raw_sev
+        description: Sinistres chiffrés, une ligne par montant. Un IDpol peut apparaître plusieurs fois.

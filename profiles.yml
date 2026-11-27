@@ -1,0 +1,8 @@
+# Connexion locale, sans secret : ce fichier peut être versionné.
+fremtpl2:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: data/fremtpl2.duckdb  # relatif au dossier d'où dbt est lancé : la racine du projet
+      threads: 4

@@ -1,0 +1,25 @@
+version: 2
+
+models:
+  - name: stg_policies
+    description: Contrats typés, avec exposition brute, plafonnée à 1 et signalée.
+    columns:
+      - name: IDpol
+        description: Identifiant du contrat (clé primaire).
+        data_tests:
+          - unique
+          - not_null
+      - name: exposure
+        description: Exposition brute, telle que dans la source.
+      - name: exposure_capped
+        description: Exposition plafonnée à 1.
+      - name: exposure_flag
+        description: Vrai si l'exposition brute dépasse 1.
+
+  - name: stg_claims
+    description: Sinistres typés, une ligne par montant.
+    columns:
+      - name: IDpol
+        description: Identifiant du contrat. Pas unique, un contrat pouvant avoir plusieurs sinistres.
+        data_tests:
+          - not_null

@@ -1,0 +1,13 @@
+name: fremtpl2
+version: "1.0.0"
+profile: fremtpl2  # doit correspondre à la clé de profiles.yml
+
+model-paths: ["models"]
+
+flags:
+  send_anonymous_usage_stats: false  # pas de télémétrie envoyée à dbt Labs
+
+models:
+  fremtpl2:
+    staging:
+      +materialized: view  # le staging ne duplique pas les données
