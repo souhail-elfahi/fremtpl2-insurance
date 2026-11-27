@@ -30,8 +30,10 @@ claims_by_policy as (
 select
     p.*,
     coalesce(c.n_amount_lines, 0) as n_amount_lines,
-    c.total_amount,         -- NULL = aucun montant observé (pas un coût de 0)
-    c.total_amount_capped,
+    -- 0 = aucun sinistre déclaré ; NULL = contrat sinistré sans montant (coût inconnu).
+    -- coalesce : un montant observé n'est jamais remplacé par 0.
+    coalesce(c.total_amount, case when p.ClaimNb = 0 then 0 end) as total_amount,
+    coalesce(c.total_amount_capped, case when p.ClaimNb = 0 then 0 end) as total_amount_capped,
     p.ClaimNb > 0 and c.IDpol is not null as has_amount
 from {{ ref('stg_policies') }} as p
 left join claims_by_policy as c

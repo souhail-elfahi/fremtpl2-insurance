@@ -14,10 +14,13 @@ models:
       - name: n_amount_lines
         description: Nombre de lignes de montant du contrat (0 si aucune).
       - name: total_amount
-        description: Somme brute des montants. NULL si aucun montant observé.
+        description: >
+          Somme brute des montants. 0 si ClaimNb = 0 ; NULL seulement pour un
+          contrat sinistré sans montant.
       - name: total_amount_capped
         description: >
           Somme des montants, chacun écrêté au p99 de tous les montants.
+          0 et NULL suivent la même règle que total_amount.
           SEUIL PROVISOIRE (V1), à revoir avant tout usage tarifaire.
       - name: has_amount
         description: Vrai si ClaimNb > 0 et au moins une ligne de montant.
