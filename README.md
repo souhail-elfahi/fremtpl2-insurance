@@ -1,112 +1,85 @@
-# Assurance auto : sinistralité freMTPL2
+<img src="assets/constat.svg" width="100%" alt="Constat de sinistre, portefeuille freMTPL2. Contrats : 678 013. Années d'exposition : 358 360. Sinistres déclarés : 36 102. Fréquence : 0,1007. Montant : case vide, vide pour 26,8 % des contrats sinistrés. Prime pure : 167 ou 228, selon ce qu'on suppose de ce vide.">
 
-Registre des décisions du projet : ce qui a été constaté dans les données, ce qui a été décidé, et les limites des résultats.
+> 26,8 % des contrats sinistrés n'ont aucun montant enregistré. Selon ce qu'on suppose de ce silence, la prime pure vaut 167 ou 228. Ce dépôt documente cet écart sans le cacher.
 
-## Question métier
+<p align="center">
+  <img alt="Python" src="https://img.shields.io/badge/Python-1F4E9C?logo=python&logoColor=white">
+  <img alt="DuckDB" src="https://img.shields.io/badge/DuckDB-1F4E9C?logo=duckdb&logoColor=white">
+  <img alt="dbt" src="https://img.shields.io/badge/dbt-1F4E9C">
+  <img alt="SQL" src="https://img.shields.io/badge/SQL-1F4E9C">
+  <img alt="tests : 10, dont 8 réussis et 2 avertissements documentés" src="https://img.shields.io/badge/tests-10%2C%20dont%208%20r%C3%A9ussis%20et%202%20avertissements%20document%C3%A9s-1C1C1C">
+</p>
 
-Quelle prime pure, c'est-à-dire quel coût attendu des sinistres par année d'exposition, ressort du portefeuille ?
+La **prime pure** est le coût attendu des sinistres par année d'exposition : fréquence × coût moyen. Note : montants dans l'unité monétaire de la source (non précisée par OpenML).
 
-**Prime pure = fréquence × coût moyen**
+## Le devenir des 36 102 sinistres
 
-- Fréquence : sinistres déclarés / années d'exposition.
-- Coût moyen : montant des sinistres / nombre de sinistres chiffrés.
+```mermaid
+sankey-beta
 
-Le calcul porte sur le portefeuille entier, sans segmentation ni modèle statistique à ce stade.
-
-## Stack
-
-| Outil | Rôle |
-|---|---|
-| Python | Chargement des données (`ingest.py`, avec scikit-learn) et audit (`checks.py`) |
-| DuckDB | Base locale `data/fremtpl2.duckdb` |
-| dbt (`dbt-duckdb`) | Transformations, tests et requête d'indicateurs |
-| SQL | Modèles, tests et contrôles |
-
-Versions figées dans `requirements.txt`. Développé avec Python 3.13.2.
-
-## Chaîne de traitement
-
-```
-OpenML (41214 : contrats, 41215 : sinistres)
-  │  ingest.py
-  ▼
-DuckDB : raw_freq, raw_sev                      ◄── checks.py (audit en lecture seule)
-  │  dbt run
-  ▼
-Staging (vues) : stg_policies, stg_claims
-  │
-  ▼
-Mart (table) : mart_policy_claims, une ligne par contrat
-  │
-  ▼
-Indicateurs : analyses/indicateurs.sql
+Total des sinistres,Sans montant,9658
+Total des sinistres,Avec montant,26444
+Avec montant,Au-dessus du p99,263
+Avec montant,Sous le seuil,26181
 ```
 
-Le staging type et signale, sans jointure ni agrégation. Le mart agrège les sinistres par `IDpol`, puis fait un `LEFT JOIN` depuis les contrats : il compte 678 013 lignes.
+| Sinistres | Nombre |
+|---|---:|
+| Déclarés | **36 102** |
+| ↳ sans montant | 9 658 |
+| ↳ avec montant | 26 444 |
+| &emsp;↳ écrêtés au p99 (plafonnés, pas supprimés) | 263 |
+| &emsp;↳ sous le seuil | 26 181 |
 
-## Audit qualité
+## Le procès des hypothèses
 
-Les données brutes contiennent 678 013 contrats et 26 639 lignes de sinistres.
+Que valent les 9 658 sinistres sans montant ? Les données ne le disent pas.
 
-| Constat | Décision | Impact |
-|---|---|---|
-| **6 polices orphelines** : 195 sinistres sans contrat, soit 1,3 % des montants | Conservés dans le staging, absents du mart. Signalés par un test en avertissement. | Exclus de la fréquence, du coût moyen et de la prime pure. Inclus dans le calcul du seuil d'écrêtement. |
-| **9 116 contrats sinistrés sur 34 060 sans montant** (26,8 %). Avec un sinistre non chiffré sur un autre contrat, **9 658 sinistres sur 36 102** n'ont pas de montant. | Montant `NULL` (inconnu) pour ces 9 116 contrats et 0 pour les contrats sans sinistre. `has_amount` signale les contrats sinistrés chiffrés. | Les sinistres restent comptés dans la fréquence. La prime pure dépend de l'hypothèse faite sur leur coût. |
-| **1 224 expositions > 1** | Contrats conservés. Valeur brute gardée (`exposure`), version plafonnée à 1 à part (`exposure_capped`), signalement (`exposure_flag`). | La fréquence et la prime pure utilisent `exposure_capped`. |
+<details>
+<summary><strong>Hypothèse A : les montants manquants valent 0 → 167</strong></summary>
 
-## Résultats
+- Les sinistres sans montant comptent dans la fréquence, mais leur coût est fixé à 0.
+- Calcul : montants observés ÷ années d'exposition de tout le portefeuille.
+- Sur ce périmètre, c'est un plancher : un montant ne peut pas être négatif.
 
-Note : montants dans l'unité monétaire de la source (non précisée par OpenML).
+**Le test logit (V1, pas encore réalisé)** pourra montrer si l'absence de montant dépend de caractéristiques observées. Il ne pourra pas établir que les sinistres manquants coûtent 0, puisque leur montant n'est pas observé.
 
-| Indicateur | Valeur |
-|---|---|
-| Fréquence (sinistres par année d'exposition) | **0,1007** |
-| Coût moyen observé par sinistre chiffré | **2 265,51** |
-| Coût médian par sinistre chiffré | **1 172** |
-| Prime pure par année d'exposition | **de 167 à 228** |
+</details>
 
-### Lire la fourchette de prime pure
+<details>
+<summary><strong>Hypothèse B : ils ressemblent aux montants observés → 228 (non démontrée)</strong></summary>
 
-| Scénario | Hypothèse sur les sinistres sans montant | Prime pure |
-|---|---|---|
-| Manquants à 0 | Ils ne coûtent rien. | 167 |
-| Manquants au hasard | Ils coûtent en moyenne autant que les sinistres chiffrés. | 228 |
+- Chaque sinistre sans montant est supposé coûter en moyenne autant qu'un sinistre avec montant.
+- Calcul : fréquence × coût moyen observé.
+- Ce n'est pas un plafond : des sinistres manquants plus coûteux donneraient davantage.
 
-**L'hypothèse « manquants au hasard » n'est pas démontrée.** La fourchette compare deux scénarios, ce n'est pas un intervalle de confiance. Sur ce périmètre, 167 est un plancher puisqu'un montant ne peut pas être négatif. En revanche, 228 n'est pas un plafond : des sinistres manquants plus coûteux que la moyenne donneraient davantage.
+**Le test logit (V1, pas encore réalisé)** pourra fragiliser cette hypothèse si l'absence de montant dépend de caractéristiques observées. Il ne pourra pas la prouver : il ne dit rien du lien entre l'absence et le montant inconnu.
 
-### Écrêtement des gros sinistres
+</details>
 
-Plafonner chaque sinistre au p99 (16 793,70) **retire 30,6 % du montant** du mart. Cet excédent **n'est pas encore mutualisé**, c'est-à-dire pas réparti sur l'ensemble des contrats. La fourchette ci-dessus est donc calculée sur les montants bruts.
+## La chaîne de traitement
 
-Le seuil est **provisoire** : il est calculé sur les 26 639 lignes de sinistres, orphelines comprises, et recalculé à chaque `dbt run`.
-
-### Origine des chiffres
-
-- Audit : `checks.py`.
-- Résultats : `analyses/indicateurs.sql`, après `dbt run` :
-
-```powershell
-.venv\Scripts\dbt.exe show --select indicateurs --limit 20 --output json
+```mermaid
+flowchart LR
+    A[OpenML] --> B[ingest.py]
+    B --> C[(DuckDB)]
+    C -. audit en lecture seule .-> D[checks.py]
+    C --> E[dbt staging]
+    E --> F[mart_policy_claims]
+    F --> G[indicateurs.sql]
 ```
 
-## Tests dbt
+## Le poids des gros sinistres
 
-10 tests. Un test dbt passe quand sa requête ne renvoie aucune ligne.
+<img src="assets/capping.svg" alt="Moyenne observée 2 265,51 ; moyenne écrêtée 1 572,58 ; médiane 1 172. L'écrêtement au p99 touche 263 sinistres et retire 30,6 % du montant." width="100%">
 
-| Test | Vérifie | Résultat attendu |
-|---|---|---|
-| `unique_stg_policies_IDpol` | `IDpol` unique dans les contrats | Succès |
-| `not_null_stg_policies_IDpol` | `IDpol` renseigné dans les contrats | Succès |
-| `strictly_positive_stg_policies_exposure` | Exposition renseignée et > 0 | Succès |
-| `not_null_stg_claims_IDpol` | `IDpol` renseigné dans les sinistres | Succès |
-| `strictly_positive_stg_claims_ClaimAmount` | Montant renseigné et > 0 | Succès |
-| `relationships_stg_claims_IDpol__IDpol__ref_stg_policies_` | Chaque sinistre a un contrat | **Avertissement** : 195 lignes, 6 `IDpol` |
-| `unique_mart_policy_claims_IDpol` | Une ligne par contrat dans le mart | Succès |
-| `not_null_mart_policy_claims_IDpol` | `IDpol` renseigné dans le mart | Succès |
-| `assert_total_amount_null_ssi_sinistre_sans_montant` | Montants `NULL` si et seulement si contrat sinistré sans ligne de montant | Succès |
-| `assert_claimnb_matches_amount_lines` | `ClaimNb` égal au nombre de lignes pour les contrats avec `has_amount` | **Avertissement** : 1 contrat |
+Le seuil (16 793,70) est **provisoire** et l'excédent **n'est pas encore mutualisé**. La fourchette de prime pure utilise donc les montants bruts.
 
-Bilan attendu : `PASS=8 WARN=2 ERROR=0`.
+## L'âge du conducteur
+
+![Fréquence des sinistres par tranche d'âge du conducteur, avec la moyenne du portefeuille en pointillé et l'exposition sous chaque barre](reports/frequency_by_driver_age.png)
+
+La fréquence des 18-25 ans (0,175) dépasse nettement celle des autres tranches (de 0,095 à 0,099) : ce constat descriptif n'isole pas l'effet de l'âge.
 
 ## Reproduire
 
@@ -119,15 +92,82 @@ python -m venv .venv
 .venv\Scripts\python.exe checks.py
 .venv\Scripts\dbt.exe run
 .venv\Scripts\dbt.exe test
+.venv\Scripts\dbt.exe show --select indicateurs --limit 50 --output json
+.venv\Scripts\python.exe reports\plot_frequency.py
 ```
 
-La connexion dbt est décrite dans `profiles.yml`, à la racine. Son chemin vers la base est relatif : lancer les commandes depuis ce dossier.
+Les chiffres de cette page viennent de [`checks.py`](checks.py), des tests dbt et de [`analyses/indicateurs.sql`](analyses/indicateurs.sql).
 
-## Prochaines étapes (V1)
+## Feuille de route
 
-Rien de ce qui suit n'est réalisé.
+- [x] Ingestion
+- [x] Audit qualité
+- [x] Transformations dbt
+- [x] 10 tests de qualité des données
+- [ ] Test de l'hypothèse de manque (logit)
+- [ ] Mutualisation de l'excédent d'écrêtement
+- [ ] GLM Poisson + Gamma
+- [ ] Power BI
+- [ ] Note tarifaire d'une page
 
-- **Modèles :** GLM Poisson pour la fréquence (avec le logarithme de l'exposition en offset) et GLM Gamma pour le coût.
-- **Données manquantes :** tester l'hypothèse de manque par une régression logistique (logit). Ce test peut montrer que le manque dépend des variables observées, mais pas prouver qu'il est indépendant du montant inconnu.
-- **Gros sinistres :** justifier le seuil d'écrêtement et mutualiser l'excédent.
-- **Restitution :** tableau de bord Power BI.
+## Registre de décisions
+
+<details>
+<summary><strong>Sinistres orphelins</strong></summary>
+
+- **Constat :** 6 polices absentes des contrats, soit 195 sinistres et 1,3 % des montants.
+- **Décision :** conservés dans le staging, absents du mart.
+- **Impact :** exclus de la fréquence et de la prime pure, mais inclus dans le calcul du seuil p99.
+- **Fichiers :** [mart](models/marts/mart_policy_claims.sql) et [test `relationships`](models/staging/_staging.yml)
+
+</details>
+
+<details>
+<summary><strong>Expositions supérieures à 1</strong></summary>
+
+- **Constat :** 1 224 contrats.
+- **Décision :** contrats conservés ; valeur brute (`exposure`), valeur plafonnée à 1 (`exposure_capped`) et signalement (`exposure_flag`).
+- **Impact :** la fréquence et la prime pure utilisent la valeur plafonnée.
+- **Fichier :** [`stg_policies.sql`](models/staging/stg_policies.sql)
+
+</details>
+
+<details>
+<summary><strong>Montants NULL ou 0</strong></summary>
+
+- **Constat :** 9 116 contrats sinistrés sur 34 060 n'ont aucun montant. Avec un sinistre sans montant sur un autre contrat, cela fait 9 658 sinistres sur 36 102.
+- **Décision :** montant `NULL` (inconnu) pour ces 9 116 contrats, 0 pour les contrats sans sinistre.
+- **Impact :** un coût inconnu n'est pas confondu avec un coût nul.
+- **Fichiers :** [mart](models/marts/mart_policy_claims.sql) et [test](tests/assert_total_amount_null_ssi_sinistre_sans_montant.sql)
+
+</details>
+
+<details>
+<summary><strong>Seuil p99 provisoire</strong></summary>
+
+- **Constat :** quelques gros sinistres pèsent lourd dans la moyenne.
+- **Décision :** écrêtement sinistre par sinistre au p99 (16 793,70), calculé sur les 26 639 lignes de sinistres, orphelines comprises.
+- **Impact :** seuil recalculé à chaque `dbt run`, à justifier ; excédent non mutualisé.
+- **Fichier :** [mart](models/marts/mart_policy_claims.sql)
+
+</details>
+
+<details>
+<summary><strong>Avertissements dbt</strong></summary>
+
+- **Constat :** 8 tests réussissent et 2 émettent un avertissement : 195 sinistres sans contrat (6 polices), et 1 contrat dont `ClaimNb` diffère du nombre de montants.
+- **Décision :** les documenter sans bloquer la chaîne.
+- **Impact :** un nombre différent de celui indiqué ici doit être examiné.
+- **Fichiers :** [test `relationships`](models/staging/_staging.yml) et [test `ClaimNb`](tests/assert_claimnb_matches_amount_lines.sql)
+
+</details>
+
+<details>
+<summary><strong>Unité monétaire</strong></summary>
+
+- **Constat :** les descriptions OpenML ne précisent pas la monnaie.
+- **Décision :** aucun symbole ; montants dans l'unité monétaire de la source.
+- **Impact :** les montants ne doivent pas être convertis ni comparés à une autre monnaie sans vérification.
+- **Fichier :** [`indicateurs.sql`](analyses/indicateurs.sql)
+
+</details>

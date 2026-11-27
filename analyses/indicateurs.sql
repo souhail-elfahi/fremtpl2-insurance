@@ -1,5 +1,5 @@
 -- Indicateurs de synthèse. Analyse dbt : compilée, mais aucune table ni vue n'est créée.
--- Lancer : .venv\Scripts\dbt.exe show --select indicateurs --limit 20 --output json
+-- Lancer : .venv\Scripts\dbt.exe show --select indicateurs --limit 50 --output json
 
 with mart as (
     select
@@ -51,6 +51,36 @@ mediane as (
     )
 ),
 
+-- sinistres au-dessus du seuil, limités aux contrats du mart
+ecretes as (
+    select count(*) as n
+    from {{ ref('stg_claims') }} as c
+    where c.ClaimAmount > (select p99 from seuil)
+      and exists (
+          select 1 from mart as m where m.IDpol = c.IDpol
+      )
+),
+
+-- fréquence par âge : mêmes tranches que reports/plot_frequency.py
+ages as (
+    select
+        case
+            when DrivAge between 18 and 25 then 1
+            when DrivAge between 26 and 35 then 2
+            when DrivAge between 36 and 50 then 3
+            when DrivAge between 51 and 65 then 4
+            when DrivAge >= 66 then 5
+        end as rang,
+        sum(ClaimNb) / sum(exposure_capped) as frequence,
+        sum(exposure_capped) as expo
+    from mart
+    group by rang
+),
+
+tranches (rang, libelle) as (
+    values (1, '18-25'), (2, '26-35'), (3, '36-50'), (4, '51-65'), (5, '66+')
+),
+
 resultats as (
     select 1 as ordre, 'seuil p99' as indicateur, p99 as valeur from seuil
     union all select 2, 'population du p99 (lignes)', lignes from seuil
@@ -68,6 +98,12 @@ resultats as (
     union all select 14, 'cout median par sinistre', montant from mediane
     union all select 15, 'prime pure, sans montant = 0', brut / expo from a
     union all select 16, 'montant retire par ecretement (%)', 100 * (brut - ecrete) / brut from a
+    union all select 17, 'sinistres avec montant', lignes_montant from a
+    union all select 18, 'sinistres ecretes au p99', n from ecretes
+    union all select 19, 'sinistres avec montant non ecretes', a.lignes_montant - ecretes.n from a, ecretes
+    union all select 20, 'annees d exposition (plafonnee)', expo from a
+    union all select 20 + rang, 'frequence ' || libelle, frequence from ages join tranches using (rang)
+    union all select 30 + rang, 'exposition ' || libelle, expo from ages join tranches using (rang)
 )
 
 select ordre, indicateur, round(valeur, 4) as valeur

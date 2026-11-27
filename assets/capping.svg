@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="260" viewBox="0 0 900 260" role="img" aria-labelledby="t d">
+  <title id="t">Coût par sinistre avec montant</title>
+  <desc id="d">Moyenne observée 2 265,51 ; moyenne écrêtée 1 572,58 ; médiane 1 172, dans l'unité monétaire de la source. L'écrêtement au p99 touche 263 sinistres et retire 30,6 % du montant.</desc>
+  <rect x="0.75" y="0.75" width="898.5" height="258.5" rx="6" fill="#FBFAF5" stroke="#B9B29C" stroke-width="1.5"/>
+  <g font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+    <text x="32" y="38" font-size="18" font-weight="700" fill="#1F4E9C">Coût par sinistre avec montant</text>
+    <text x="868" y="38" font-size="12" text-anchor="end" fill="#1C1C1C">unité monétaire de la source</text>
+
+    <!-- longueurs proportionnelles : 520 px pour 2 265,51 ; en rouge, la part retirée par l'écrêtement -->
+    <g font-size="15" fill="#1C1C1C">
+      <text x="32" y="82">Moyenne observée</text>
+      <text x="32" y="130">Moyenne écrêtée</text>
+      <text x="32" y="178">Médiane</text>
+    </g>
+    <rect x="210" y="63" width="360.9" height="28" fill="#1F4E9C"/>
+    <rect x="570.9" y="63" width="159.1" height="28" fill="#B3261E"/>
+    <text x="650.4" y="82" font-size="13" font-weight="700" text-anchor="middle" fill="#FFFFFF">30,6 % retirés</text>
+    <rect x="210" y="111" width="360.9" height="28" fill="#1F4E9C"/>
+    <rect x="210" y="159" width="269" height="28" fill="#7D95C2"/>
+    <g font-size="15" font-weight="700" fill="#1C1C1C">
+      <text x="742" y="82">2 265,51</text>
+      <text x="582.9" y="130">1 572,58</text>
+      <text x="491" y="178">1 172</text>
+    </g>
+
+    <text x="450" y="228" font-size="14" text-anchor="middle" fill="#1C1C1C">L'écrêtement au p99 touche 263 sinistres et <tspan font-weight="700" fill="#B3261E">retire 30,6 % du montant</tspan></text>
+  </g>
+</svg>
