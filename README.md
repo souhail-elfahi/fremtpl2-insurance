@@ -28,7 +28,7 @@ La **prime pure** est le coût attendu des sinistres par année d'exposition : f
 
 Que valent les 9 658 sinistres sans montant ? Les données ne le disent pas.
 
-Constat : la part de sinistres chiffrés va de 22,7 % (véhicules neufs) à 93,6 % (BonusMalus > 100) selon le segment ; l'hypothèse B est donc peu plausible, ce que le logit V1 testera.
+Constat : la part de sinistres chiffrés va de 22,7 % (véhicules neufs) à 93,6 % (BonusMalus > 100) selon le segment ; le manque n'est pas indépendant du segment, ce que le logit V1 testera. En le supposant au hasard à l'intérieur de chaque segment (une variable à la fois), la prime pure reste entre 224,7 et 230,3 ; cela ne dit rien du coût des sinistres manquants.
 
 <details>
 <summary><strong>Hypothèse A : les montants manquants valent 0 → 167</strong></summary>

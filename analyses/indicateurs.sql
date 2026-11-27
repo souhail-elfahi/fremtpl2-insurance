@@ -108,6 +108,13 @@ resultats as (
         min(100.0 * n_sinistres_chiffres / n_sinistres) from {{ ref('mart_segments') }}
     union all select 42, 'part de sinistres chiffres, maximum par segment (%)',
         max(100.0 * n_sinistres_chiffres / n_sinistres) from {{ ref('mart_segments') }}
+    -- sinistres sans montant supposés semblables aux autres À L'INTÉRIEUR de chaque modalité, une variable à la fois
+    union all select 43, 'prime pure, manque au hasard par segment, minimum', min(prime) from (
+        select sum(n_sinistres * cout_moyen_observe) / sum(exposition) as prime
+        from {{ ref('mart_segments') }} group by variable) as p
+    union all select 44, 'prime pure, manque au hasard par segment, maximum', max(prime) from (
+        select sum(n_sinistres * cout_moyen_observe) / sum(exposition) as prime
+        from {{ ref('mart_segments') }} group by variable) as p
 )
 
 select ordre, indicateur, round(valeur, 4) as valeur
