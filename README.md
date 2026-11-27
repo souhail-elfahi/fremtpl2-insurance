@@ -7,21 +7,14 @@
   <img alt="DuckDB" src="https://img.shields.io/badge/DuckDB-1F4E9C?logo=duckdb&logoColor=white">
   <img alt="dbt" src="https://img.shields.io/badge/dbt-1F4E9C">
   <img alt="SQL" src="https://img.shields.io/badge/SQL-1F4E9C">
-  <img alt="tests : 10, dont 8 réussis et 2 avertissements documentés" src="https://img.shields.io/badge/tests-10%2C%20dont%208%20r%C3%A9ussis%20et%202%20avertissements%20document%C3%A9s-1C1C1C">
+  <img alt="tests : 14, dont 12 réussis et 2 avertissements documentés" src="https://img.shields.io/badge/tests-14%2C%20dont%2012%20r%C3%A9ussis%20et%202%20avertissements%20document%C3%A9s-1C1C1C">
 </p>
 
 La **prime pure** est le coût attendu des sinistres par année d'exposition : fréquence × coût moyen. Note : montants dans l'unité monétaire de la source (non précisée par OpenML).
 
 ## Le devenir des 36 102 sinistres
 
-```mermaid
-sankey-beta
-
-Total des sinistres,Sans montant,9658
-Total des sinistres,Avec montant,26444
-Avec montant,Au-dessus du p99,263
-Avec montant,Sous le seuil,26181
-```
+<img src="assets/devenir.svg" width="100%" alt="Sur 36 102 sinistres déclarés, 9 658 sont sans montant et 26 444 avec montant. Parmi ces derniers, 263 sont au-dessus du p99 et 26 181 sous le seuil.">
 
 | Sinistres | Nombre |
 |---|---:|
@@ -34,6 +27,8 @@ Avec montant,Sous le seuil,26181
 ## Le procès des hypothèses
 
 Que valent les 9 658 sinistres sans montant ? Les données ne le disent pas.
+
+Constat : la part de sinistres chiffrés va de 22,7 % (véhicules neufs) à 93,6 % (BonusMalus > 100) selon le segment ; l'hypothèse B est donc peu plausible, ce que le logit V1 testera.
 
 <details>
 <summary><strong>Hypothèse A : les montants manquants valent 0 → 167</strong></summary>
@@ -60,13 +55,15 @@ Que valent les 9 658 sinistres sans montant ? Les données ne le disent pas.
 ## La chaîne de traitement
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[OpenML] --> B[ingest.py]
     B --> C[(DuckDB)]
     C -. audit en lecture seule .-> D[checks.py]
     C --> E[dbt staging]
     E --> F[mart_policy_claims]
+    F --> H[mart_segments]
     F --> G[indicateurs.sql]
+    H --> G
 ```
 
 ## Le poids des gros sinistres
@@ -103,7 +100,7 @@ Les chiffres de cette page viennent de [`checks.py`](checks.py), des tests dbt e
 - [x] Ingestion
 - [x] Audit qualité
 - [x] Transformations dbt
-- [x] 10 tests de qualité des données
+- [x] 14 tests de qualité des données
 - [ ] Test de l'hypothèse de manque (logit)
 - [ ] Mutualisation de l'excédent d'écrêtement
 - [ ] GLM Poisson + Gamma
@@ -155,7 +152,7 @@ Les chiffres de cette page viennent de [`checks.py`](checks.py), des tests dbt e
 <details>
 <summary><strong>Avertissements dbt</strong></summary>
 
-- **Constat :** 8 tests réussissent et 2 émettent un avertissement : 195 sinistres sans contrat (6 polices), et 1 contrat dont `ClaimNb` diffère du nombre de montants.
+- **Constat :** 12 tests réussissent et 2 émettent un avertissement : 195 sinistres sans contrat (6 polices), et 1 contrat dont `ClaimNb` diffère du nombre de montants.
 - **Décision :** les documenter sans bloquer la chaîne.
 - **Impact :** un nombre différent de celui indiqué ici doit être examiné.
 - **Fichiers :** [test `relationships`](models/staging/_staging.yml) et [test `ClaimNb`](tests/assert_claimnb_matches_amount_lines.sql)
